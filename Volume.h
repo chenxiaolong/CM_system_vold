@@ -74,6 +74,7 @@ public:
     int formatVol(bool wipe);
 
     const char *getLabel() { return mLabel; }
+    bool isExternalSd();
     int getState() { return mState; }
     int getFlags() { return mFlags; };
 
