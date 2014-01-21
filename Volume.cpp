@@ -377,7 +377,7 @@ bool Volume::isMountpointMounted(const char *path) {
 
 int Volume::mountVol() {
     dev_t deviceNodes[4];
-    int n, i, rc = 0;
+    int n, i = 0;
     char errmsg[255];
     bool externalSd = isExternalSd();
 
@@ -489,7 +489,6 @@ int Volume::mountVol() {
         setState(Volume::State_Checking);
 
         errno = 0;
-        int gid;
 
         fstype = getFsType((const char *)devicePath);
 
@@ -660,8 +659,6 @@ int Volume::doUnmount(const char *path, bool force) {
 }
 
 int Volume::unmountVol(bool force, bool revert) {
-    int i, rc;
-
     int flags = getFlags();
     bool providesAsec = (flags & VOL_PROVIDES_ASEC) != 0;
 
