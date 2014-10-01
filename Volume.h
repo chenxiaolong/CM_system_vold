@@ -76,7 +76,6 @@ public:
     int unmountVol(bool force, bool revert);
     int formatVol(bool wipe, const char *fstype = NULL);
 
-    bool isExternalSd();
     const char* getLabel() { return mLabel; }
     const char* getUuid() { return mUuid; }
     const char* getUserLabel() { return mUserLabel; }

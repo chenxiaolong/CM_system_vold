@@ -177,23 +177,6 @@ int Volume::handleBlockEvent(NetlinkEvent *evt) {
     return -1;
 }
 
-bool Volume::isExternalSd() {
-    const char* externalSdPath1 = getenv("EXTERNAL_SD") ? : "/storage/sdcard1";
-    // Necessary for Kit Kat
-    const char* externalSdPath2 = "/mnt/media_rw/sdcard1";
-    const char* disablePath = "/data/system/no-external-apps";
-
-    if (strcmp(getMountpoint(), externalSdPath1) == 0
-          || strcmp(getMountpoint(), externalSdPath2) == 0) {
-        if (access(disablePath, F_OK) != -1) {
-            SLOGV("Application moving disabled; will not touch ASEC\n");
-            return false;
-        }
-        return true;
-    }
-    return false;
-}
-
 void Volume::setUuid(const char* uuid) {
     char msg[256];
 
@@ -393,7 +376,6 @@ int Volume::mountVol() {
     dev_t deviceNodes[4];
     int n, i = 0;
     char errmsg[255];
-    bool externalSd = isExternalSd();
 
     int flags = getFlags();
     bool providesAsec = (flags & VOL_PROVIDES_ASEC) != 0;
@@ -601,8 +583,7 @@ int Volume::mountVol() {
         extractMetadata(devicePath);
 
 #ifndef MINIVOLD
-        // Create android_secure on external SD
-        if ((externalSd || providesAsec) && mountAsecExternal() != 0) {
+        if (providesAsec && mountAsecExternal() != 0) {
             SLOGE("Failed to mount secure area (%s)", strerror(errno));
             umount(getMountpoint());
             setState(Volume::State_Idle);
@@ -708,7 +689,7 @@ int Volume::unmountVol(bool force, bool revert) {
 
     // TODO: determine failure mode if FUSE times out
 
-    if ((isExternalSd() || providesAsec) && doUnmount(Volume::SEC_ASECDIR_EXT, force) != 0) {
+    if (providesAsec && doUnmount(Volume::SEC_ASECDIR_EXT, force) != 0) {
         SLOGE("Failed to unmount secure area on %s (%s)", getMountpoint(), strerror(errno));
         goto out_mounted;
     }
@@ -744,7 +725,7 @@ int Volume::unmountVol(bool force, bool revert) {
     return 0;
 
 fail_remount_secure:
-    if ((isExternalSd() || providesAsec) && mountAsecExternal() != 0) {
+    if (providesAsec && mountAsecExternal() != 0) {
         SLOGE("Failed to remount secure area (%s)", strerror(errno));
         goto out_nomedia;
     }
